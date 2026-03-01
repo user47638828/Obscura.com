@@ -1,1 +1,61 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Obscura</title>
+  <link rel="stylesheet" href="global.css">
+  <link rel="stylesheet" href="login.css">
+</head>
+<body>
 
+  <main class="login-container">
+
+    <section class="branding">
+      <h1 class="brand-name">Obscura</h1>
+      <p class="brand-motto">
+        Sag, was du denkst. Niemand schaut auf dein Profilbild.
+      </p>
+    </section>
+
+    <section class="auth-box">
+      <form id="auth-form">
+
+        <input
+          type="text"
+          id="username"
+          placeholder="Username"
+          autocomplete="off"
+        >
+
+        <input
+          type="email"
+          id="email"
+          placeholder="E-Mail"
+          autocomplete="off"
+        >
+
+        <input
+          type="password"
+          id="password"
+          placeholder="Passwort"
+        >
+
+        <button type="submit" id="auth-submit">
+          Anmelden / Registrieren
+        </button>
+
+      </form>
+
+      <button id="google-login">
+        Mit Google anmelden
+      </button>
+
+      <p id="auth-error"></p>
+    </section>
+
+  </main>
+
+  <script src="auth.js"></script>
+</body>
+</html>
