@@ -1,1 +1,101 @@
+body {
+  margin: 0;
+  padding: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: #0e0e10;
+  color: #e6e6e6;
+}
 
+.login-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+.branding {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.brand-name {
+  font-size: 48px;
+  font-weight: 600;
+  margin: 0 0 12px 0;
+}
+
+.brand-motto {
+  font-size: 14px;
+  color: #9a9a9a;
+  max-width: 320px;
+  line-height: 1.4;
+  margin: 0 auto;
+}
+
+.auth-box {
+  width: 100%;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+#auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+#auth-form input {
+  background-color: #16161a;
+  border: 1px solid #26262b;
+  color: #e6e6e6;
+  padding: 12px 14px;
+  font-size: 14px;
+  border-radius: 6px;
+  outline: none;
+}
+
+#auth-form input:focus {
+  border-color: #4a4a52;
+}
+
+#auth-submit {
+  margin-top: 8px;
+  padding: 12px;
+  background-color: #e6e6e6;
+  color: #0e0e10;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+#auth-submit:hover {
+  opacity: 0.9;
+}
+
+#google-login {
+  padding: 12px;
+  background-color: transparent;
+  color: #e6e6e6;
+  border: 1px solid #26262b;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+#google-login:hover {
+  border-color: #4a4a52;
+}
+
+#auth-error {
+  font-size: 12px;
+  color: #ff6b6b;
+  min-height: 16px;
+  text-align: center;
+}
