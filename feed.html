@@ -1,1 +1,45 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Obscura · For You</title>
+  <link rel="stylesheet" href="global.css">
+  <link rel="stylesheet" href="feed.css">
+</head>
+<body>
 
+  <main class="feed-container">
+    <h2 class="feed-title">For You</h2>
+
+    <div class="post-dummy">
+      <p class="post-text">Willkommen bei Obscura.</p>
+      <div class="post-meta">
+        <span>❤️ 0</span>
+        <span>💬 0</span>
+      </div>
+    </div>
+
+    <div class="post-dummy">
+      <p class="post-text">Dies ist ein Platzhalter-Post.</p>
+      <div class="post-meta">
+        <span>❤️ 0</span>
+        <span>💬 0</span>
+      </div>
+    </div>
+  </main>
+
+  <nav class="bottom-nav">
+    <button onclick="location.href='search.html'">🔍</button>
+    <button class="active" onclick="location.href='feed.html'">🏠</button>
+    <button onclick="location.href='profile.html'">👤</button>
+  </nav>
+
+  <script src="auth.js"></script>
+  <script>
+    if (!getUser()) {
+      window.location.href = "index.html"
+    }
+  </script>
+</body>
+</html>
