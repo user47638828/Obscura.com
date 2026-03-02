@@ -1,137 +1,233 @@
-import { auth, db, ensureUserDocument } from "./backend.js"
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js"
+import {
+  subscribe,
+  isReady,
+  getUser,
+  updateUsername,
+  updateBio,
+  followUser,
+  unfollowUser,
+  createPost
+} from "./state.js"
+
+import { db } from "./backend.js"
 import {
   doc,
   getDoc,
-  updateDoc,
-  setDoc,
-  deleteDoc,
   collection,
   query,
   where,
   getDocs,
-  addDoc,
-  serverTimestamp
+  onSnapshot
 } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js"
 
 const params = new URLSearchParams(location.search)
-const profileUidParam = params.get("uid")
+const profileUid = params.get("uid")
 
-const usernameEl = document.getElementById("profile-username")
-const bioEl = document.getElementById("profile-bio")
-const levelEl = document.getElementById("profile-level")
-const xpEl = document.getElementById("profile-xp")
-const likesEl = document.getElementById("profile-likes")
-const commentsEl = document.getElementById("profile-comments")
-const followersEl = document.getElementById("profile-followers")
-const followingEl = document.getElementById("profile-following")
+const elUsername = document.getElementById("profile-username")
+const elBio = document.getElementById("profile-bio")
+const elLevel = document.getElementById("profile-level")
+const elXp = document.getElementById("profile-xp")
+const elLikes = document.getElementById("profile-likes")
+const elComments = document.getElementById("profile-comments")
+const elFollowers = document.getElementById("profile-followers")
+const elFollowing = document.getElementById("profile-following")
 
-const editNameBtn = document.getElementById("edit-name")
-const editBioBtn = document.getElementById("edit-bio")
-const followBtn = document.getElementById("follow-btn")
+const btnEditName = document.getElementById("edit-name")
+const btnEditBio = document.getElementById("edit-bio")
+const btnFollow = document.getElementById("follow-btn")
 
-const createPostSection = document.getElementById("create-post")
-const postInput = document.getElementById("post-input")
-const postBtn = document.getElementById("post-btn")
-const postsEl = document.getElementById("posts")
+const sectionCreatePost = document.getElementById("create-post")
+const inputPost = document.getElementById("post-input")
+const btnPost = document.getElementById("post-btn")
 
-function levelFromXp(xp) {
+const postsContainer = document.getElementById("posts")
+
+let viewer = null
+let profile = null
+let isOwnProfile = false
+let isFollowing = false
+let unsubProfile = null
+let unsubPosts = null
+
+function calcLevel(xp) {
   return Math.floor(xp / 50) + 1
 }
 
-async function loadProfile(viewer, profileUid) {
-  const userRef = doc(db, "users", profileUid)
-  const snap = await getDoc(userRef)
-  const data = snap.data()
+function resetUI() {
+  elUsername.textContent = ""
+  elBio.textContent = ""
+  elLevel.textContent = ""
+  elXp.textContent = ""
+  elLikes.textContent = ""
+  elComments.textContent = ""
+  elFollowers.textContent = ""
+  elFollowing.textContent = ""
+  postsContainer.innerHTML = ""
+}
 
-  usernameEl.textContent = data.username
-  bioEl.textContent = data.bio || "Keine Bio"
-  xpEl.textContent = data.xp
-  levelEl.textContent = levelFromXp(data.xp)
-  likesEl.textContent = data.totalLikes || 0
-  commentsEl.textContent = data.totalComments || 0
+function applyProfile(data) {
+  elUsername.textContent = data.username
+  elBio.textContent = data.bio || "Keine Bio"
+  elXp.textContent = data.xp
+  elLevel.textContent = calcLevel(data.xp)
+  elLikes.textContent = data.totalLikes || 0
+  elComments.textContent = data.totalComments || 0
+  elFollowers.textContent = data.followersCount || 0
+  elFollowing.textContent = data.followingCount || 0
+}
 
-  const followersSnap = await getDocs(collection(db, "users", profileUid, "followers"))
-  const followingSnap = await getDocs(collection(db, "users", profileUid, "following"))
-  followersEl.textContent = followersSnap.size
-  followingEl.textContent = followingSnap.size
+function setOwnProfileUI() {
+  btnEditName.style.display = "inline-block"
+  btnEditBio.style.display = "inline-block"
+  btnFollow.style.display = "none"
+  sectionCreatePost.style.display = "block"
+}
 
-  const postsSnap = await getDocs(
-    query(collection(db, "posts"), where("userId", "==", profileUid))
-  )
-  postsEl.innerHTML = ""
-  postsSnap.forEach(d => {
-    const el = document.createElement("div")
-    el.className = "profile-post"
-    el.textContent = d.data().content
-    postsEl.appendChild(el)
-  })
+function setForeignProfileUI() {
+  btnEditName.style.display = "none"
+  btnEditBio.style.display = "none"
+  btnFollow.style.display = "block"
+  sectionCreatePost.style.display = "none"
+}
 
-  const isOwnProfile = viewer.uid === profileUid
+async function loadProfileDoc(uid) {
+  const ref = doc(db, "users", uid)
+  const snap = await getDoc(ref)
+  if (!snap.exists()) throw new Error("profile-not-found")
+  return { uid, ...snap.data() }
+}
 
-  editNameBtn.style.display = isOwnProfile ? "inline-block" : "none"
-  editBioBtn.style.display = isOwnProfile ? "inline-block" : "none"
-  createPostSection.style.display = isOwnProfile ? "block" : "none"
-  followBtn.style.display = isOwnProfile ? "none" : "block"
+async function checkFollowing(viewerUid, targetUid) {
+  const ref = doc(db, "users", targetUid, "followers", viewerUid)
+  const snap = await getDoc(ref)
+  return snap.exists()
+}
 
-  if (!isOwnProfile) {
-    const followRef = doc(db, "users", profileUid, "followers", viewer.uid)
-    const followingRef = doc(db, "users", viewer.uid, "following", profileUid)
-    const isFollowing = (await getDoc(followRef)).exists()
-    followBtn.textContent = isFollowing ? "Unfollow" : "Follow"
+function renderFollowButton() {
+  btnFollow.textContent = isFollowing ? "Unfollow" : "Follow"
+}
 
-    followBtn.onclick = async () => {
-      if ((await getDoc(followRef)).exists()) {
-        await deleteDoc(followRef)
-        await deleteDoc(followingRef)
-      } else {
-        await setDoc(followRef, { createdAt: serverTimestamp() })
-        await setDoc(followingRef, { createdAt: serverTimestamp() })
-      }
-      loadProfile(viewer, profileUid)
+async function handleFollowClick() {
+  btnFollow.disabled = true
+  try {
+    if (isFollowing) {
+      await unfollowUser(profile.uid)
+      isFollowing = false
+    } else {
+      await followUser(profile.uid)
+      isFollowing = true
     }
-  }
-
-  editNameBtn.onclick = async () => {
-    const name = prompt("Neuer Username", data.username)
-    if (!name) return
-    await updateDoc(userRef, { username: name })
-    loadProfile(viewer, profileUid)
-  }
-
-  editBioBtn.onclick = async () => {
-    const bio = prompt("Neue Bio", data.bio || "")
-    if (bio === null) return
-    await updateDoc(userRef, { bio })
-    loadProfile(viewer, profileUid)
-  }
-
-  postBtn.onclick = async () => {
-    const text = postInput.value.trim()
-    if (!text) return
-
-    await addDoc(collection(db, "posts"), {
-      userId: viewer.uid,
-      username: data.username,
-      content: text,
-      likes: 0,
-      comments: 0,
-      createdAt: serverTimestamp()
-    })
-
-    postInput.value = ""
-    loadProfile(viewer, profileUid)
+    renderFollowButton()
+  } finally {
+    btnFollow.disabled = false
   }
 }
 
-onAuthStateChanged(auth, async (user) => {
-  if (!user) {
-    location.href = "index.html"
-    return
+async function handleEditName() {
+  const current = profile.username
+  const next = prompt("Neuer Name", current)
+  if (!next || next === current) return
+  btnEditName.disabled = true
+  try {
+    await updateUsername(next)
+  } finally {
+    btnEditName.disabled = false
   }
+}
 
-  await ensureUserDocument(user)
+async function handleEditBio() {
+  const current = profile.bio || ""
+  const next = prompt("Neue Bio", current)
+  if (next === null || next === current) return
+  btnEditBio.disabled = true
+  try {
+    await updateBio(next)
+  } finally {
+    btnEditBio.disabled = false
+  }
+}
 
-  const profileUid = profileUidParam || user.uid
-  await loadProfile(user, profileUid)
+async function handleCreatePost() {
+  const text = inputPost.value.trim()
+  if (!text) return
+  btnPost.disabled = true
+  try {
+    await createPost(text)
+    inputPost.value = ""
+  } finally {
+    btnPost.disabled = false
+  }
+}
+
+function renderPost(docSnap) {
+  const data = docSnap.data()
+  const el = document.createElement("div")
+  el.className = "profile-post"
+  el.textContent = data.content
+  return el
+}
+
+function subscribePosts(uid) {
+  const q = query(
+    collection(db, "posts"),
+    where("userId", "==", uid)
+  )
+
+  unsubPosts = onSnapshot(q, snap => {
+    postsContainer.innerHTML = ""
+    snap.docs
+      .sort((a, b) => (b.data().createdAt?.seconds || 0) - (a.data().createdAt?.seconds || 0))
+      .forEach(d => {
+        postsContainer.appendChild(renderPost(d))
+      })
+  })
+}
+
+function subscribeProfile(uid) {
+  const ref = doc(db, "users", uid)
+  unsubProfile = onSnapshot(ref, snap => {
+    if (!snap.exists()) return
+    profile = { uid, ...snap.data() }
+    applyProfile(profile)
+  })
+}
+
+function cleanup() {
+  if (unsubProfile) unsubProfile()
+  if (unsubPosts) unsubPosts()
+}
+
+function bootstrap(viewerUser) {
+  viewer = viewerUser
+  const targetUid = profileUid || viewer.uid
+  isOwnProfile = targetUid === viewer.uid
+
+  resetUI()
+
+  loadProfileDoc(targetUid).then(async data => {
+    profile = data
+    applyProfile(profile)
+
+    if (isOwnProfile) {
+      setOwnProfileUI()
+    } else {
+      setForeignProfileUI()
+      isFollowing = await checkFollowing(viewer.uid, targetUid)
+      renderFollowButton()
+    }
+
+    subscribeProfile(targetUid)
+    subscribePosts(targetUid)
+  })
+}
+
+btnEditName.onclick = handleEditName
+btnEditBio.onclick = handleEditBio
+btnFollow.onclick = handleFollowClick
+btnPost.onclick = handleCreatePost
+
+subscribe(user => {
+  if (!user || !isReady()) return
+  cleanup()
+  bootstrap(user)
 })
