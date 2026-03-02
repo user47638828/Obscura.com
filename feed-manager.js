@@ -19,6 +19,7 @@ const commentInput = document.getElementById("comment-input")
 const sendCommentBtn = document.getElementById("send-comment")
 
 let currentUser
+let currentUsername
 let activePostId = null
 
 function timeAgo(ts) {
@@ -37,6 +38,10 @@ onAuthStateChanged(auth, async (user) => {
   }
 
   currentUser = user
+
+  const userSnap = await getDoc(doc(db, "users", user.uid))
+  currentUsername = userSnap.data().username
+
   feedEl.innerHTML = ""
 
   const snap = await getDocs(collection(db, "posts"))
@@ -45,7 +50,7 @@ onAuthStateChanged(auth, async (user) => {
     .map(d => ({ id: d.id, ...d.data() }))
     .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0))
 
-  posts.forEach(post => {
+  for (const post of posts) {
     const el = document.createElement("div")
     el.className = "feed-post"
 
@@ -64,20 +69,27 @@ onAuthStateChanged(auth, async (user) => {
     `
 
     feedEl.appendChild(el)
-  })
 
-  document.querySelectorAll(".like").forEach(likeEl => {
-    const postId = likeEl.dataset.id
-    const countEl = likeEl.querySelector(".count")
-    const postRef = doc(db, "posts", postId)
-    const likeRef = doc(db, "posts", postId, "likes", user.uid)
+    const likeEl = el.querySelector(".like")
+    const countEl = el.querySelector(".count")
+    const postRef = doc(db, "posts", post.id)
+    const likeRef = doc(db, "posts", post.id, "likes", user.uid)
+
+    let liked = false
 
     getDoc(likeRef).then(snap => {
-      if (snap.exists()) likeEl.firstChild.textContent = "❤️"
+      if (snap.exists()) {
+        liked = true
+        likeEl.firstChild.textContent = "❤️"
+      }
     })
 
     likeEl.onclick = async () => {
-      if ((await getDoc(likeRef)).exists()) return
+      if (liked) return
+
+      liked = true
+      likeEl.firstChild.textContent = "❤️"
+      countEl.textContent = Number(countEl.textContent) + 1
 
       await setDoc(likeRef, {
         userId: user.uid,
@@ -87,34 +99,37 @@ onAuthStateChanged(auth, async (user) => {
       await updateDoc(postRef, {
         likes: increment(1)
       })
-
-      likeEl.firstChild.textContent = "❤️"
-      countEl.textContent = Number(countEl.textContent) + 1
     }
-  })
 
-  document.querySelectorAll(".comment").forEach(commentEl => {
-    commentEl.onclick = async () => {
-      activePostId = commentEl.dataset.id
+    el.querySelector(".comment").onclick = async () => {
+      activePostId = post.id
       commentsList.innerHTML = ""
       modal.classList.remove("hidden")
 
-      const cSnap = await getDocs(collection(db, "posts", activePostId, "comments"))
+      const cSnap = await getDocs(collection(db, "posts", post.id, "comments"))
       cSnap.forEach(c => {
+        const data = c.data()
         const el = document.createElement("div")
         el.className = "comment"
-        el.textContent = c.data().text
+        el.innerHTML = `
+          <small>${data.username}</small>
+          <div>${data.text}</div>
+        `
         commentsList.appendChild(el)
       })
     }
-  })
+  }
 })
 
 sendCommentBtn.onclick = async () => {
   if (!commentInput.value || !activePostId) return
 
+  const text = commentInput.value
+
   await addDoc(collection(db, "posts", activePostId, "comments"), {
-    text: commentInput.value,
+    text,
+    userId: currentUser.uid,
+    username: currentUsername,
     createdAt: serverTimestamp()
   })
 
@@ -124,7 +139,10 @@ sendCommentBtn.onclick = async () => {
 
   const el = document.createElement("div")
   el.className = "comment"
-  el.textContent = commentInput.value
+  el.innerHTML = `
+    <small>${currentUsername}</small>
+    <div>${text}</div>
+  `
   commentsList.appendChild(el)
 
   commentInput.value = ""
@@ -132,4 +150,4 @@ sendCommentBtn.onclick = async () => {
 
 modal.onclick = (e) => {
   if (e.target === modal) modal.classList.add("hidden")
-}
+                        }
