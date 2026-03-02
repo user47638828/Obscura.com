@@ -1,19 +1,18 @@
 import { auth, db } from "./backend.js"
-import {
-  onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js"
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js"
 import {
   doc,
   getDoc,
-  setDoc,
+  updateDoc,
   collection,
   query,
   where,
   getDocs
 } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js"
 
-const usernameEl = document.getElementById("profile-username")
-const bioEl = document.getElementById("profile-bio")
+const usernameInput = document.getElementById("profile-username")
+const bioInput = document.getElementById("profile-bio")
+const saveBtn = document.getElementById("save-profile")
 const levelEl = document.getElementById("profile-level")
 const xpEl = document.getElementById("profile-xp")
 const likesEl = document.getElementById("profile-likes")
@@ -24,44 +23,33 @@ function getLevel(xp) {
   return Math.floor(xp / 50) + 1
 }
 
+let currentUserRef = null
+
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
     window.location.href = "index.html"
     return
   }
 
-  const userRef = doc(db, "users", user.uid)
-  const snap = await getDoc(userRef)
+  currentUserRef = doc(db, "users", user.uid)
+  const snap = await getDoc(currentUserRef)
+  const data = snap.data()
 
-  if (!snap.exists()) {
-    await setDoc(userRef, {
-      username: user.email.split("@")[0],
-      bio: "",
-      xp: 0,
-      totalLikes: 0,
-      totalComments: 0,
-      createdAt: Date.now()
-    })
-  }
-
-  const data = (await getDoc(userRef)).data()
-
-  usernameEl.textContent = data.username
-  bioEl.textContent = data.bio || "Keine Bio gesetzt"
+  usernameInput.value = data.username
+  bioInput.value = data.bio || ""
   xpEl.textContent = data.xp
   levelEl.textContent = getLevel(data.xp)
   likesEl.textContent = data.totalLikes || 0
   commentsEl.textContent = data.totalComments || 0
 
-  const postsQuery = query(
+  const q = query(
     collection(db, "posts"),
     where("userId", "==", user.uid)
   )
 
-  const postsSnap = await getDocs(postsQuery)
-
-  postsSnap.forEach((doc) => {
-    const post = doc.data()
+  const postsSnap = await getDocs(q)
+  postsSnap.forEach((d) => {
+    const post = d.data()
     const el = document.createElement("div")
     el.className = "profile-post"
     el.innerHTML = `
@@ -72,5 +60,19 @@ onAuthStateChanged(auth, async (user) => {
       </div>
     `
     postsContainer.appendChild(el)
+  })
+})
+
+saveBtn.addEventListener("click", async () => {
+  if (!currentUserRef) return
+
+  const username = usernameInput.value.trim()
+  const bio = bioInput.value.trim()
+
+  if (!username) return
+
+  await updateDoc(currentUserRef, {
+    username,
+    bio
   })
 })
