@@ -21,6 +21,7 @@ const sendCommentBtn = document.getElementById("send-comment")
 let currentUser
 let currentUsername
 let activePostId = null
+let activePostOwnerId = null
 
 function timeAgo(ts) {
   if (!ts) return "gerade eben"
@@ -99,10 +100,18 @@ onAuthStateChanged(auth, async (user) => {
       await updateDoc(postRef, {
         likes: increment(1)
       })
+
+      if (post.userId !== currentUser.uid) {
+        await updateDoc(doc(db, "users", post.userId), {
+          totalLikes: increment(1),
+          xp: increment(1)
+        })
+      }
     }
 
     el.querySelector(".comment").onclick = async () => {
       activePostId = post.id
+      activePostOwnerId = post.userId
       commentsList.innerHTML = ""
       modal.classList.remove("hidden")
 
@@ -137,6 +146,13 @@ sendCommentBtn.onclick = async () => {
     comments: increment(1)
   })
 
+  if (activePostOwnerId !== currentUser.uid) {
+    await updateDoc(doc(db, "users", activePostOwnerId), {
+      totalComments: increment(1),
+      xp: increment(3)
+    })
+  }
+
   const el = document.createElement("div")
   el.className = "comment"
   el.innerHTML = `
@@ -150,4 +166,4 @@ sendCommentBtn.onclick = async () => {
 
 modal.onclick = (e) => {
   if (e.target === modal) modal.classList.add("hidden")
-                        }
+}
