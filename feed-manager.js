@@ -2,8 +2,6 @@ import { auth, db } from "./backend.js"
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js"
 import {
   collection,
-  query,
-  orderBy,
   getDocs,
   doc,
   setDoc,
@@ -39,13 +37,18 @@ onAuthStateChanged(auth, async (user) => {
   currentUser = user
   feedEl.innerHTML = ""
 
-  const q = query(collection(db, "posts"), orderBy("createdAt", "desc"))
-  const snap = await getDocs(q)
+  const snap = await getDocs(collection(db, "posts"))
 
-  for (const d of snap.docs) {
-    const post = d.data()
+  const posts = snap.docs
+    .map(d => ({ id: d.id, ...d.data() }))
+    .sort((a, b) => {
+      const ta = a.createdAt?.seconds || 0
+      const tb = b.createdAt?.seconds || 0
+      return tb - ta
+    })
 
-    const likeRef = doc(db, "posts", d.id, "likes", user.uid)
+  for (const post of posts) {
+    const likeRef = doc(db, "posts", post.id, "likes", user.uid)
     const liked = (await getDoc(likeRef)).exists()
 
     const el = document.createElement("div")
@@ -55,8 +58,8 @@ onAuthStateChanged(auth, async (user) => {
       <div class="feed-post-header">${post.username}</div>
       <div class="feed-post-content">${post.content}</div>
       <div class="feed-post-meta">
-        <span class="like">${liked ? "❤️" : "🩶"} ${post.likes}</span>
-        <span class="comment">💬 ${post.comments}</span>
+        <span class="like">${liked ? "❤️" : "🩶"} ${post.likes || 0}</span>
+        <span class="comment">💬 ${post.comments || 0}</span>
       </div>
     `
 
@@ -69,12 +72,12 @@ onAuthStateChanged(auth, async (user) => {
     }
 
     el.querySelector(".comment").onclick = async () => {
-      activePostId = d.id
+      activePostId = post.id
       commentsList.innerHTML = ""
       modal.classList.remove("hidden")
 
-      const cSnap = await getDocs(collection(db, "posts", d.id, "comments"))
-      cSnap.forEach((c) => {
+      const cSnap = await getDocs(collection(db, "posts", post.id, "comments"))
+      cSnap.forEach(c => {
         const el = document.createElement("div")
         el.className = "comment"
         el.textContent = c.data().text
