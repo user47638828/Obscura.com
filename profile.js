@@ -5,9 +5,11 @@ import {
   getDoc,
   updateDoc,
   collection,
+  addDoc,
   query,
   where,
-  getDocs
+  getDocs,
+  serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js"
 
 const usernameEl = document.getElementById("profile-username")
@@ -19,10 +21,14 @@ const levelEl = document.getElementById("profile-level")
 const xpEl = document.getElementById("profile-xp")
 const likesEl = document.getElementById("profile-likes")
 const commentsEl = document.getElementById("profile-comments")
+
+const postInput = document.getElementById("post-input")
+const postBtn = document.getElementById("post-btn")
 const postsEl = document.getElementById("posts")
 
 let userRef
 let currentUser
+let currentUsername
 
 function levelFromXp(xp) {
   return Math.floor(xp / 50) + 1
@@ -45,6 +51,8 @@ onAuthStateChanged(auth, async (user) => {
   const snap = await getDoc(userRef)
   const data = snap.data()
 
+  currentUsername = data.username
+
   usernameEl.textContent = data.username
   bioEl.textContent = data.bio || "Keine Bio gesetzt"
 
@@ -52,6 +60,17 @@ onAuthStateChanged(auth, async (user) => {
   levelEl.textContent = levelFromXp(data.xp)
   likesEl.textContent = data.totalLikes || 0
   commentsEl.textContent = data.totalComments || 0
+
+  const q = query(collection(db, "posts"), where("userId", "==", user.uid))
+  const postsSnap = await getDocs(q)
+
+  postsSnap.forEach((d) => {
+    const post = d.data()
+    const el = document.createElement("div")
+    el.className = "profile-post"
+    el.innerHTML = `<p>${post.content}</p>`
+    postsEl.appendChild(el)
+  })
 })
 
 editNameBtn.addEventListener("click", async () => {
@@ -66,6 +85,7 @@ editNameBtn.addEventListener("click", async () => {
 
   await updateDoc(userRef, { username: name })
   usernameEl.textContent = name
+  currentUsername = name
 })
 
 editBioBtn.addEventListener("click", async () => {
@@ -74,4 +94,25 @@ editBioBtn.addEventListener("click", async () => {
 
   await updateDoc(userRef, { bio })
   bioEl.textContent = bio || "Keine Bio gesetzt"
+})
+
+postBtn.addEventListener("click", async () => {
+  const text = postInput.value.trim()
+  if (!text) return
+
+  await addDoc(collection(db, "posts"), {
+    userId: currentUser.uid,
+    username: currentUsername,
+    content: text,
+    likes: 0,
+    comments: 0,
+    createdAt: serverTimestamp()
+  })
+
+  const el = document.createElement("div")
+  el.className = "profile-post"
+  el.innerHTML = `<p>${text}</p>`
+  postsEl.prepend(el)
+
+  postInput.value = ""
 })
