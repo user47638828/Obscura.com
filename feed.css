@@ -1,46 +1,44 @@
-.feed-container {
+.feed {
   padding: 16px;
-  padding-bottom: 80px;
+  padding-bottom: 120px;
 }
 
 .feed-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   margin-bottom: 16px;
 }
 
-.feed-header h2 {
+.feed-header h1 {
   margin: 0;
-  font-size: 20px;
+  font-size: 22px;
+  color: #f0eaff;
 }
 
-.feed-header button {
-  background: none;
-  border: 1px solid #26262b;
-  color: #e6e6e6;
-  padding: 6px 10px;
-  border-radius: 6px;
-  cursor: pointer;
+.feed-post {
+  background: linear-gradient(180deg, #16161a, #0e0e10);
+  border-radius: 20px;
+  padding: 14px;
+  margin-bottom: 16px;
+  box-shadow: 0 0 24px rgba(140, 90, 255, 0.18);
+  border: 1px solid rgba(140, 90, 255, 0.3);
 }
 
-.post {
-  background-color: #16161a;
-  border: 1px solid #26262b;
-  border-radius: 8px;
-  padding: 12px;
-  margin-bottom: 12px;
+.feed-post-header {
+  font-size: 13px;
+  font-weight: 600;
+  color: #cfc3ff;
+  margin-bottom: 6px;
 }
 
-.post-text {
-  margin: 0 0 8px 0;
+.feed-post-content {
   font-size: 14px;
   line-height: 1.4;
+  color: #e6e6e6;
+  margin-bottom: 10px;
 }
 
-.post-meta {
+.feed-post-meta {
   display: flex;
-  gap: 12px;
+  gap: 16px;
   font-size: 12px;
-  color: #9a9a9a;
+  color: #9b8cff;
 }
