@@ -7,9 +7,9 @@
   background: linear-gradient(180deg, #16161a, #0e0e10);
   border-radius: 20px;
   padding: 16px;
-  box-shadow: 0 0 28px rgba(140, 90, 255, 0.2);
-  border: 1px solid rgba(140, 90, 255, 0.35);
   margin-bottom: 20px;
+  border: 1px solid rgba(140, 90, 255, 0.35);
+  box-shadow: 0 0 28px rgba(140, 90, 255, 0.2);
 }
 
 .profile-row {
@@ -40,8 +40,9 @@
 }
 
 .profile-stats {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
   margin-top: 14px;
 }
 
@@ -50,11 +51,25 @@
   font-size: 16px;
   font-weight: 600;
   color: #e6ddff;
+  text-align: center;
 }
 
 .profile-stats small {
   font-size: 11px;
   color: #9b8cff;
+  text-align: center;
+  display: block;
+}
+
+.follow-btn {
+  width: 100%;
+  margin-top: 14px;
+  padding: 10px;
+  border-radius: 14px;
+  border: none;
+  background: linear-gradient(135deg, #8c5aff, #b18cff);
+  color: #0e0e10;
+  font-weight: 600;
 }
 
 .create-post {
