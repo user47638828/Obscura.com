@@ -10,13 +10,22 @@
 </head>
 <body>
 
-  <main class="profile-container">
+  <main class="profile">
 
-    <section class="profile-header">
-      <input id="profile-username" class="profile-input" />
-      <textarea id="profile-bio" class="profile-bio"></textarea>
+    <section class="profile-card">
+      <div class="profile-main">
+        <div class="profile-text">
+          <div class="profile-row">
+            <h1 id="profile-username"></h1>
+            <button id="edit-name" class="edit-btn">Edit</button>
+          </div>
 
-      <button id="save-profile">Speichern</button>
+          <div class="profile-row">
+            <p id="profile-bio"></p>
+            <button id="edit-bio" class="edit-btn">Edit</button>
+          </div>
+        </div>
+      </div>
 
       <div class="profile-stats">
         <div>
@@ -38,8 +47,9 @@
       </div>
     </section>
 
-    <section id="profile-posts">
+    <section class="profile-posts">
       <h3>Posts</h3>
+      <div id="posts"></div>
     </section>
 
   </main>
