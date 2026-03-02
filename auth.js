@@ -1,3 +1,12 @@
+import { auth } from "./backend.js"
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signInWithPopup,
+  GoogleAuthProvider,
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js"
+
 const form = document.getElementById("auth-form")
 const usernameInput = document.getElementById("username")
 const emailInput = document.getElementById("email")
@@ -5,58 +14,43 @@ const passwordInput = document.getElementById("password")
 const errorBox = document.getElementById("auth-error")
 const googleButton = document.getElementById("google-login")
 
-function setUser(user) {
-  localStorage.setItem("obscura_user", JSON.stringify(user))
-}
-
-function getUser() {
-  const user = localStorage.getItem("obscura_user")
-  return user ? JSON.parse(user) : null
-}
+const provider = new GoogleAuthProvider()
 
 function redirectToFeed() {
   window.location.href = "feed.html"
 }
 
-function validateInput() {
-  if (!emailInput.value || !passwordInput.value) {
-    errorBox.textContent = "Bitte E-Mail und Passwort eingeben"
-    return false
-  }
-  return true
-}
+onAuthStateChanged(auth, (user) => {
+  if (user) redirectToFeed()
+})
 
-if (getUser()) {
-  redirectToFeed()
-}
-
-form.addEventListener("submit", (e) => {
+form.addEventListener("submit", async (e) => {
   e.preventDefault()
   errorBox.textContent = ""
 
-  if (!validateInput()) return
+  const email = emailInput.value
+  const password = passwordInput.value
 
-  const user = {
-    id: crypto.randomUUID(),
-    username: usernameInput.value || "user",
-    email: emailInput.value,
-    xp: 0,
-    createdAt: Date.now()
+  if (!email || !password) {
+    errorBox.textContent = "Bitte E-Mail und Passwort eingeben"
+    return
   }
 
-  setUser(user)
-  redirectToFeed()
+  try {
+    await signInWithEmailAndPassword(auth, email, password)
+  } catch {
+    try {
+      await createUserWithEmailAndPassword(auth, email, password)
+    } catch (err) {
+      errorBox.textContent = err.message
+    }
+  }
 })
 
-googleButton.addEventListener("click", () => {
-  const user = {
-    id: crypto.randomUUID(),
-    username: "google_user",
-    email: "google@user",
-    xp: 0,
-    createdAt: Date.now()
+googleButton.addEventListener("click", async () => {
+  try {
+    await signInWithPopup(auth, provider)
+  } catch (err) {
+    errorBox.textContent = err.message
   }
-
-  setUser(user)
-  redirectToFeed()
 })
