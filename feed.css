@@ -39,11 +39,11 @@
   gap: 18px;
   font-size: 14px;
   color: #9b8cff;
-  align-items: center;
 }
 
 .feed-post-meta span {
   cursor: pointer;
+  user-select: none;
 }
 
 .modal {
@@ -52,6 +52,7 @@
   background: rgba(0,0,0,0.7);
   display: flex;
   align-items: flex-end;
+  z-index: 1000;
 }
 
 .modal.hidden {
@@ -61,9 +62,10 @@
 .modal-content {
   background: #0e0e10;
   width: 100%;
-  max-height: 70%;
+  max-height: calc(100vh - 56px);
   border-radius: 20px 20px 0 0;
   padding: 12px;
+  padding-bottom: 72px;
   display: flex;
   flex-direction: column;
 }
@@ -81,7 +83,7 @@
 
 #comment-input {
   width: 100%;
-  min-height: 50px;
+  min-height: 56px;
   background: #16161a;
   border: 1px solid #26262b;
   color: #e6e6e6;
@@ -90,9 +92,9 @@
 }
 
 #send-comment {
-  margin-top: 6px;
-  padding: 8px;
-  border-radius: 12px;
+  margin-top: 8px;
+  padding: 10px;
+  border-radius: 14px;
   border: none;
   background: linear-gradient(135deg, #8c5aff, #b18cff);
   color: #0e0e10;
