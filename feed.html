@@ -11,14 +11,20 @@
 <body>
 
   <main class="feed">
-
     <header class="feed-header">
       <h1>For You</h1>
     </header>
 
     <section id="feed-posts"></section>
-
   </main>
+
+  <div id="comments-modal" class="modal hidden">
+    <div class="modal-content">
+      <div id="comments-list"></div>
+      <textarea id="comment-input" placeholder="Kommentar schreiben"></textarea>
+      <button id="send-comment">Senden</button>
+    </div>
+  </div>
 
   <nav class="bottom-nav">
     <button onclick="location.href='search.html'">🔍</button>
