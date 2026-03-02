@@ -7,7 +7,9 @@ import {
   setDoc,
   getDoc,
   addDoc,
-  serverTimestamp
+  serverTimestamp,
+  updateDoc,
+  increment
 } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js"
 
 const feedEl = document.getElementById("feed-posts")
@@ -52,8 +54,12 @@ onAuthStateChanged(auth, async (user) => {
       <div class="feed-post-header">${post.username}</div>
       <div class="feed-post-content">${post.content}</div>
       <div class="feed-post-meta">
-        <span class="like" data-id="${post.id}">🩶 <span class="count">${post.likes || 0}</span></span>
-        <span class="comment" data-id="${post.id}">💬 ${post.comments || 0}</span>
+        <span class="like" data-id="${post.id}">
+          🩶 <span class="count">${post.likes || 0}</span>
+        </span>
+        <span class="comment" data-id="${post.id}">
+          💬 ${post.comments || 0}
+        </span>
       </div>
     `
 
@@ -63,6 +69,7 @@ onAuthStateChanged(auth, async (user) => {
   document.querySelectorAll(".like").forEach(likeEl => {
     const postId = likeEl.dataset.id
     const countEl = likeEl.querySelector(".count")
+    const postRef = doc(db, "posts", postId)
     const likeRef = doc(db, "posts", postId, "likes", user.uid)
 
     getDoc(likeRef).then(snap => {
@@ -77,12 +84,12 @@ onAuthStateChanged(auth, async (user) => {
         createdAt: serverTimestamp()
       })
 
+      await updateDoc(postRef, {
+        likes: increment(1)
+      })
+
       likeEl.firstChild.textContent = "❤️"
       countEl.textContent = Number(countEl.textContent) + 1
-
-      await setDoc(doc(db, "posts", postId), {
-        likes: Number(countEl.textContent)
-      }, { merge: true })
     }
   })
 
@@ -109,6 +116,10 @@ sendCommentBtn.onclick = async () => {
   await addDoc(collection(db, "posts", activePostId, "comments"), {
     text: commentInput.value,
     createdAt: serverTimestamp()
+  })
+
+  await updateDoc(doc(db, "posts", activePostId), {
+    comments: increment(1)
   })
 
   const el = document.createElement("div")
