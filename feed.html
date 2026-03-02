@@ -4,29 +4,35 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Obscura · For You</title>
+
   <link rel="stylesheet" href="global.css">
   <link rel="stylesheet" href="feed.css">
 </head>
 <body>
 
   <main class="feed-container">
-    <h2 class="feed-title">For You</h2>
+    <header class="feed-header">
+      <h2>For You</h2>
+      <button id="logout-btn">Logout</button>
+    </header>
 
-    <div class="post-dummy">
-      <p class="post-text">Willkommen bei Obscura.</p>
-      <div class="post-meta">
-        <span>❤️ 0</span>
-        <span>💬 0</span>
+    <section id="feed">
+      <div class="post">
+        <p class="post-text">Willkommen bei Obscura.</p>
+        <div class="post-meta">
+          <span>❤️ 0</span>
+          <span>💬 0</span>
+        </div>
       </div>
-    </div>
 
-    <div class="post-dummy">
-      <p class="post-text">Dies ist ein Platzhalter-Post.</p>
-      <div class="post-meta">
-        <span>❤️ 0</span>
-        <span>💬 0</span>
+      <div class="post">
+        <p class="post-text">Der Feed ist bereit für echte Posts.</p>
+        <div class="post-meta">
+          <span>❤️ 0</span>
+          <span>💬 0</span>
+        </div>
       </div>
-    </div>
+    </section>
   </main>
 
   <nav class="bottom-nav">
@@ -35,11 +41,6 @@
     <button onclick="location.href='profile.html'">👤</button>
   </nav>
 
-  <script src="auth.js"></script>
-  <script>
-    if (!getUser()) {
-      window.location.href = "index.html"
-    }
-  </script>
+  <script type="module" src="feed-manager.js"></script>
 </body>
 </html>
