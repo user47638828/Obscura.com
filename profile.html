@@ -1,1 +1,53 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Obscura · Profil</title>
 
+  <link rel="stylesheet" href="global.css">
+  <link rel="stylesheet" href="profile.css">
+</head>
+<body>
+
+  <main class="profile-container">
+
+    <section class="profile-header">
+      <h2 id="profile-username"></h2>
+      <p id="profile-bio"></p>
+
+      <div class="profile-stats">
+        <div>
+          <span id="profile-level"></span>
+          <small>Level</small>
+        </div>
+        <div>
+          <span id="profile-xp"></span>
+          <small>XP</small>
+        </div>
+        <div>
+          <span id="profile-likes"></span>
+          <small>Likes</small>
+        </div>
+        <div>
+          <span id="profile-comments"></span>
+          <small>Kommentare</small>
+        </div>
+      </div>
+    </section>
+
+    <section id="profile-posts">
+      <h3>Posts</h3>
+    </section>
+
+  </main>
+
+  <nav class="bottom-nav">
+    <button onclick="location.href='search.html'">🔍</button>
+    <button onclick="location.href='feed.html'">🏠</button>
+    <button class="active" onclick="location.href='profile.html'">👤</button>
+  </nav>
+
+  <script type="module" src="profile.js"></script>
+</body>
+</html>
