@@ -5,10 +5,10 @@ import {
   query,
   orderBy,
   getDocs,
-  addDoc,
   doc,
-  deleteDoc,
+  setDoc,
   getDoc,
+  addDoc,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js"
 
@@ -22,6 +22,7 @@ let currentUser
 let activePostId
 
 function timeAgo(ts) {
+  if (!ts) return "gerade eben"
   const diff = Math.floor((Date.now() - ts) / 1000)
   if (diff < 60) return diff + "s"
   if (diff < 3600) return Math.floor(diff / 60) + "m"
@@ -36,19 +37,21 @@ onAuthStateChanged(auth, async (user) => {
   }
 
   currentUser = user
+  feedEl.innerHTML = ""
 
   const q = query(collection(db, "posts"), orderBy("createdAt", "desc"))
   const snap = await getDocs(q)
 
-  snap.forEach(async (d) => {
+  for (const d of snap.docs) {
     const post = d.data()
+
     const likeRef = doc(db, "posts", d.id, "likes", user.uid)
     const liked = (await getDoc(likeRef)).exists()
 
     const el = document.createElement("div")
     el.className = "feed-post"
     el.innerHTML = `
-      <div class="feed-post-time">${timeAgo(post.createdAt.toMillis())}</div>
+      <div class="feed-post-time">${timeAgo(post.createdAt?.toMillis?.())}</div>
       <div class="feed-post-header">${post.username}</div>
       <div class="feed-post-content">${post.content}</div>
       <div class="feed-post-meta">
@@ -59,8 +62,9 @@ onAuthStateChanged(auth, async (user) => {
 
     el.querySelector(".like").onclick = async () => {
       if (liked) return
-      await addDoc(collection(db, "posts", d.id, "likes"), {
-        userId: user.uid
+      await setDoc(likeRef, {
+        userId: user.uid,
+        createdAt: serverTimestamp()
       })
     }
 
@@ -79,7 +83,7 @@ onAuthStateChanged(auth, async (user) => {
     }
 
     feedEl.appendChild(el)
-  })
+  }
 })
 
 sendCommentBtn.onclick = async () => {
@@ -94,9 +98,10 @@ sendCommentBtn.onclick = async () => {
   el.className = "comment"
   el.textContent = commentInput.value
   commentsList.appendChild(el)
+
   commentInput.value = ""
 }
 
 modal.onclick = (e) => {
   if (e.target === modal) modal.classList.add("hidden")
-        }
+}
